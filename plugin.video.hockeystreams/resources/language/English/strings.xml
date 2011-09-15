@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<strings>
+    <string id="30000">Hockeystreams</string>
+
+    <!-- Plugin settings strings -->
+    <string id="30200">User email</string>
+    <string id="30201">Password</string>
+    <string id="30218">Debug</string>
+</strings>
