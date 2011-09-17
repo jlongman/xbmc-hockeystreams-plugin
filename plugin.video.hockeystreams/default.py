@@ -1,9 +1,17 @@
-import urllib, urllib2, re, os, datetime, sys
+import weblogin, gethtml
+
+import urllib, re, os, datetime, sys
 from BeautifulSoup import BeautifulSoup
-from mechanize import Browser
 import xbmcplugin, xbmcaddon, xbmcgui
 
 super_verbose_logging = False
+
+__addonname__ = 'plugin.video.hockeystreams'
+__datapath__ = os.path.join('special://profile/addon_data/',__addonname__)
+
+#important! deals with a bug where errors are thrown if directory does not exist.
+if not os.path.exists: os.makedirs(__datapath__)
+cookiepath = __datapath__
 
 
 __plugin__ = "Hockeystreams"
@@ -19,7 +27,7 @@ password = __settings__.getSetting('password')
 __dbg__ = __settings__.getSetting("debug") == "true"
 
 hockeystreams = 'http://www.hockeystreams.com'
-archivestreams = 'http://hockeystreams.com/hockey_archives'
+archivestreams = 'http://www.hockeystreams.com/hockey_archives'
 
 hqStreams = re.compile('/live_streams/.*')
 hqArchives = re.compile('/hockey_archives/0/.*/[0-9]+')
@@ -57,17 +65,16 @@ def MONTH(url, year, mode):
         addDir(patsy.strftime("%B"), url, mode, '', daysCount, year, month)
 
 def DAY(url, year, month, mode):
+    startday = 31
     if year == today.year and month == today.month:
         startday = today.day
-    else:
-        startday = 31
 
-        for day in range(startday, 0, -1):
-            try:
-                patsy = datetime.date(year, month, day)
-                addDir(patsy.strftime("%x"), url, mode, '', 1, year, month, day)
-            except ValueError:
-                pass # skip day
+    for day in range(startday, 0, -1):
+        try:
+            patsy = datetime.date(year, month, day)
+            addDir(patsy.strftime("%x"), url, mode, '', 1, year, month, day)
+        except ValueError:
+            pass # skip day
 
 
 def get_params():
@@ -85,7 +92,7 @@ def get_params():
                 param[splitParams[0]] = splitParams[1]
     return param
 
-def soupIt(currentUrl, selector, gameType, br = None):
+def soupIt(currentUrl, selector, gameType, loginRequired = False):
     if (__dbg__):
         if gameType != empty:
             print ("hockeystreams: enter soupIt url %s selector %s gameType %s" % (
@@ -93,15 +100,15 @@ def soupIt(currentUrl, selector, gameType, br = None):
         else:
             print (
             "hockeystreams: enter soupIt  url %s selector %s gameType %s" % (currentUrl, selector, "empty"))
+    if loginRequired:
+        html = gethtml.get(currentUrl, cookiepath)
+    else:
+        html = gethtml.get(currentUrl)
 
-    if br is None:
-        br = Browser()
-        print ("hockeystreams: empty browser ")
-    data = br.open(currentUrl)
-    if (__dbg__):
-        print ("hockeystreams: \t\tfetch browser result %s %s" % (data, br))
+    if (__dbg__ and super_verbose_logging):
+        print ("hockeystreams: \t\tfetch browser result %s " % html)
 
-    html = data.read()
+    
     if (__dbg__):
         print ("hockeystreams: \t\t soupIt %s " % html)
     soup = BeautifulSoup(''.join(html))
@@ -121,6 +128,9 @@ def CATEGORIES():
         print ("hockeystreams: enter categories")
     addDir('Live Streams', hockeystreams, 1, '', 1)
     addDir('Archived Streams', hockeystreams, 2, '', 1)
+    addDir('Login', hockeystreams, 66, '', 1)
+    addDir('IP Exception', hockeystreams, 99, '', 1)
+    addDir('Settings', hockeystreams, 69, '', 1)
     #addDir('RSS Streams', hockeystreams, 3, '', 1)
 
 def addDir(name, url, mode, icon, count, year=-1, month=-1, day=-1, gamename = None):
@@ -145,7 +155,6 @@ def addDir(name, url, mode, icon, count, year=-1, month=-1, day=-1, gamename = N
 def addLink(name, gamename, date, url, icon, count):
     u = sys.argv[0] + "?url=" + urllib.quote_plus(url) + "&mode=20&name=" + urllib.quote_plus(name) + \
         "&gamename=" + urllib.quote_plus(gamename)
-    #u = url
     liz = xbmcgui.ListItem(name, iconImage=icon, thumbnailImage=icon)
     liz.setInfo(type="Video", infoLabels={"Title": name, "Date": date})
     liz.setProperty('isPlayable', 'true')
@@ -173,24 +182,19 @@ def find_hockey_game_names(url, gameType):
 
 
 def login():
-    br = Browser()
-    data = br.open(hockeystreams)                                      ##default login page, not passed url
-    if (__dbg__ and super_verbose_logging):
-        print ("hockeystreams: \t\tfetch login %s %s" % (data, br))
-    br.select_form(nr=0)
-    br['username'] = username
-    br['password'] = password
-    data = br.submit()
-    if (__dbg__ and super_verbose_logging):
-        print ("hockeystreams: \t\tfetch login %s %s" % (data, br))
-    return br
+    if (__dbg__):
+        print ("hockeystreams: login attempt")
+    if not weblogin.doLogin(cookiepath, username, password):
+        if (__dbg__):
+            print ("hockeystreams: login fail")
+        return
 
 
-def find_qualities(url, br):
+def find_qualities(url):
     if (__dbg__):
         print ("hockeystreams: \t\t find qs ")
 
-    foundQs = soupIt(url, 'attrs', playbackTypes, br)
+    foundQs = soupIt(url, 'attrs', playbackTypes, True)
     for test in foundQs:
         if (__dbg__):
             print ("hockeystreams: \t\t soupfound qs %s" % (str(test)))
@@ -206,7 +210,6 @@ def find_qualities(url, br):
     return games
 
 def LIVE_GAMES(mode):
-    #login(username, password, hockeystreams, 'login')
     if (__dbg__):
         print ("hockeystreams: enter live games")
     url = hockeystreams
@@ -219,7 +222,6 @@ def LIVE_GAMES(mode):
         addDir(gameName, v, mode, '', 1, gamename = gameName)
 
 def ARCHIVE_GAMES(year, month, day, mode):
-    #login(username, password, archivestreams, 'login')
     if (__dbg__):
         print ("hockeystreams: enter archive games")
     archiveMonth = str(month)
@@ -239,13 +241,12 @@ def ARCHIVE_GAMES(year, month, day, mode):
         addDir(gameName, v, mode, '', 1, gamename = gameName)
 
 def QUALITY(url, gamename):
-    br = login()
 
     if (__dbg__):
         print ("hockeystreams: enter quality")
-    games = find_qualities(url, br)
+    games = find_qualities(url)
     for k, v in games.iteritems():
-        foundGames = soupIt(v,'input',empty, br)
+        foundGames = soupIt(v,'input',empty, True)
         for test in foundGames:                                 ##get rid of this 'busy loop' in the next minor revision
             if (__dbg__):
                 print("hockeystreams: \t\t soupfound directs %s" % (test))
@@ -327,6 +328,16 @@ elif mode == 6:
 elif mode == 20:
     PLAY_VIDEO(url)
     cache = not (today.year == year and today.month == month and today.day == day)
+elif mode == 66:
+    if not login():
+        print "failed"
+
+elif mode == 99:
+    login()
+    exception_data = urllib.urlencode({'update': 'Update Exception'})
+    exception_url = hockeystreams + "/include/exception.inc.php?" + exception_data
+    read = gethtml.get(exception_url, cookiepath)
+
 
 
 ##rss stuff
@@ -343,67 +354,11 @@ elif mode == 20:
 
 ##---------------------------------------------------
 ##end of rss stuff
+if mode == 69:
+    xbmcplugin.openSettings(sys.argv[0])
+else:
+    xbmcplugin.endOfDirectory(int(sys.argv[1]), cacheToDisc = cache)
 
-xbmcplugin.endOfDirectory(int(sys.argv[1]), cacheToDisc = cache)
-
-
-#def getGameNameGamePage(gameType):
-#    if (__dbg__):
-#        print ("hockeystreams: enter getNameGamePage %s" % (str(gameType)))
-#    if gameType in (hqStreams, hdStreams, hdpStreams):
-#        foundGames = soupIt(username, password, hockeystreams, 'attrs', gameType)
-#    elif gameType in (hqArchives, hdArchives, hdpArchives):
-#        archiveDate = createDate()
-#        if (__dbg__):
-#            print ("hockeystreams: \t\t archive  %s" % (archivestreams + archiveDate))
-#        foundGames = soupIt(username, password, archivestreams + archiveDate, 'attrs', gameType)
-#    else:
-#        foundGames = soupIt(username, password, hockeystreams, 'attrs', gameType)
-#    for test in foundGames:
-#        if (__dbg__):
-#            print ("hockeystreams: \t\t foundGames %s" % (str(test)))
-#
-#        ending = str(test['href'])
-#        gamePage = hockeystreams + ending
-#        gameName = os.path.dirname(gamePage)
-#        gameName = re.sub('_|/', ' ', gameName)
-#
-#        if (__dbg__):
-#            print ("hockeystreams: \t\t gamename %s" % (gameName))
-#        if gameType in (hqStreams, hdStreams, hdpStreams):
-#            offset = gameName.index(" live streams ") + len(" live streams ")
-#        elif gameType in (hqArchives, hdArchives, hdpArchives):
-#            offset = gameName.index(" hockey archives 0 ") + len(" hockey archives 0 ")
-#        gameName = gameName[offset:]
-#        games[gameName] = gamePage
-#    del foundGames
-#    return games                                                ##return a dict with game name and page containing direct link
-
-
-#
-#def populateGames(selector):
-#    if (__dbg__):
-#        print ("hockeystreams: enter populateGames %s" % selector.pattern)
-#    populated = getGameNameDirectLink(selector)
-#    for k, v in populated.iteritems():
-#        addLink(k, '', v, '', 1)
-
-
-#def getGameNameDirectLink(url, selector):
-#    if (__dbg__):
-#        print ("hockeystreams: enter getGameNameDirectLink %s" % (str(selector.pattern)))
-#    games = getGameNameGamePage(selector)                       ##hqStreams,hdStreams,hdpStreams,etc
-#    if (__dbg__):
-#        print ("hockeystreams: \t\t games %s" % (str(games)))
-#    for k, v in games.iteritems():
-#        foundGames = soupIt(username, password, v, 'attrs', playbackTypes)  ##foundGames is BeautifulSoup.resultSet
-#        for test in foundGames:                                 ##get rid of this 'busy loop' in the next minor revision
-#            #if 'direct_link' in test.get('id',''):
-#            directLink = archivestreams + test['href']
-#            directLinks[k] = directLink
-#    del selector
-#    return directLinks
-#
 
 #def retrieveUrl(url, referer):
 #	req = urllib2.Request(url)
