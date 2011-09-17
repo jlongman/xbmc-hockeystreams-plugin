@@ -24,6 +24,7 @@ import urllib,urllib2
 import cookielib
 import os
 import re
+import xbmc
 
 
 #!!!!!!!!!!! Please set the compatible_urllist
@@ -56,7 +57,7 @@ def get(url,cookiepath=None, cj=None):
                 #check if user has supplied only a folder path, or a full path
                 if not os.path.isfile(cookiepath):
                     #if the user supplied only a folder path, append on to the end of the path a common filename.
-                    cookiepath = os.path.join(cookiepath,'cookies.lwp')
+                    cookiepath = xbmc.translatePath(os.path.join(cookiepath,'cookies.lwp') )
 
                 #check that the cookie exists
                 if os.path.exists(cookiepath):

@@ -24,6 +24,7 @@ import os
 import re
 import urllib,urllib2
 import cookielib
+import xbmc
 
 ### TESTING SETTINGS (will only be used when running this file independent of your addon)
 # Remember to clear these after you are finished testing,
@@ -89,7 +90,7 @@ def doLogin(cookiepath, username, password):
         #print str(response)
         #print source
 
-        cj.save(cookiepath)
+        cj.save(xbmc.translatePath(cookiepath))
 
         print "cookies!" + str(cj._cookies)
         #check the received html for a string that will tell us if the user is logged in
