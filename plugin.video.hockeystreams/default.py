@@ -22,8 +22,6 @@ __svn__ = "http://xbmc-hockeystreams.googlecode.com/svn/trunk/"
 __svn_revision__ = "$Revision$"
 __settings__ = xbmcaddon.Addon(id='plugin.video.hockeystreams')
 
-username = __settings__.getSetting('username')
-password = __settings__.getSetting('password')
 __dbg__ = __settings__.getSetting("debug") == "true"
 
 hockeystreams = 'http://www.hockeystreams.com'
@@ -150,7 +148,7 @@ def addDir(name, url, mode, icon, count, year=-1, month=-1, day=-1, gamename = N
     return ok
 
 def addLink(name, gamename, date, url, icon, count):
-    u = sys.argv[0] + "?url=" + urllib.quote_plus(url) + "&mode=20&name=" + urllib.quote_plus(name) + \
+    u = sys.argv[0] + "?url=" + urllib.quote_plus(url) + "&mode=2000&name=" + urllib.quote_plus(name) + \
         "&gamename=" + urllib.quote_plus(gamename)
     liz = xbmcgui.ListItem(name, iconImage=icon, thumbnailImage=icon)
     liz.setInfo(type="Video", infoLabels={"Title": name, "Date": date})
@@ -181,7 +179,10 @@ def find_hockey_game_names(url, gameType):
 def login():
     if (__dbg__):
         print ("hockeystreams: login attempt")
-    if not weblogin.doLogin(cookiepath, username, password, __dbg__):
+    if not __settings__.getSetting('username') or not __settings__.getSetting('password'):
+        __settings__.openSettings()
+        return False
+    if not weblogin.doLogin(cookiepath, __settings__.getSetting('username'), __settings__.getSetting('password'), __dbg__):
         if (__dbg__):
             print ("hockeystreams: login fail")
         return False
@@ -212,10 +213,10 @@ def CATEGORIES():
         print ("hockeystreams: enter categories")
     addDir('Live Streams', hockeystreams, 1, '', 1)
     addDir('Archived By Date', hockeystreams, 2, '', 1)
-    addDir('Archived By Team', hockeystreams, 100, '', 1)
-    addDir('Login', hockeystreams, 66, '', 1)
-    addDir('IP Exception', hockeystreams, 99, '', 1)
-    addDir('Settings', hockeystreams, 69, '', 1)
+    addDir('Archived By Team', hockeystreams, 30, '', 1)
+    addDir('  Login', hockeystreams, 66, '', 1)
+    addDir('  IP Exception', hockeystreams, 99, '', 1)
+    
     #addDir('RSS Streams', hockeystreams, 3, '', 1)
 
 def LIVE_GAMES(mode):
@@ -272,7 +273,7 @@ def ARCHIVE_GAMES_BY_TEAM(url, mode):
         gameName = k
         offset = gameName.find(strip) + len(strip)
         gameName = gameName[offset:]
-        addDir(gameName, v, mode, '', 6, gamename = gameName)
+        addDir(gameName, v, mode, '', 1000, gamename = gameName)
 
 def QUALITY(url, gamename):
     if (__dbg__):
@@ -341,7 +342,7 @@ cache = True
 if mode is None or mode == 0 or url is None or len(url) < 1:
     CATEGORIES()
 elif mode == 1:
-    LIVE_GAMES(6)
+    LIVE_GAMES(1000)
     cache = False
 elif mode == 2:
     YEAR(hockeystreams, 3)
@@ -353,35 +354,36 @@ elif mode == 4:
     DAY(hockeystreams, year, month, 5)
     cache = not (today.year == year and today.month == month)
 elif mode == 5:
-    ARCHIVE_GAMES_BY_DATE(year, month, day, 6)
+    ARCHIVE_GAMES_BY_DATE(year, month, day, 1000)
     cache = not (today.year == year and today.month == month and today.day == day)
-elif mode == 6:
+elif mode == 30:
+    BY_TEAM(archivestreams, 31)
+elif mode == 31:
+    ARCHIVE_GAMES_BY_TEAM(url, 1000)
+elif mode == 1000:
     QUALITY(url, gamename)
     cache = False
-elif mode == 20:
+elif mode == 2000:
     PLAY_VIDEO(url)
     cache = not (today.year == year and today.month == month and today.day == day)
+
 elif mode == 66:
     if not login():
         print "failed"
-        addDir('failed!', hockeystreams, 0, '', 6)
+        addDir('failed!', hockeystreams, 0, '', 5)
     else:
-        addDir('succeeded!', hockeystreams, 0, '', 6)
-elif mode == 100:
-    BY_TEAM(archivestreams, 101)
-elif mode == 101:
-    ARCHIVE_GAMES_BY_TEAM(url, 6)
+        addDir('succeeded!', hockeystreams, 0, '', 5)
 elif mode == 99:
     if not login():
-        addDir('failed!', hockeystreams, 0, '', 6)
+        addDir('failed!', hockeystreams, 0, '', 5)
     else:
         exception_data = urllib.urlencode({'update': 'Update Exception'})
         exception_url = hockeystreams + "/include/exception.inc.php?" + exception_data
         read = gethtml.get(exception_url, cookiepath)
-        addDir('succeeded!', hockeystreams, 0, '', 6)
+        addDir('succeeded!', hockeystreams, 0, '', 5)
 
 if mode == 69:
     #xbmcplugin.openSettings(sys.argv[0])
-    xbmcaddon.Addon.openSettings(sys.argv[0])
+    pass
 else:
     xbmcplugin.endOfDirectory(int(sys.argv[1]), cacheToDisc = cache)
