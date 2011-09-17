@@ -61,9 +61,13 @@ def DAY(url, year, month, mode):
         startday = today.day
     else:
         startday = 31
-    for day in range(startday, 0, -1):
-        patsy = datetime.date(year, month, day)
-        addDir(patsy.strftime("%x"), url, mode, '', 1, year, month, day)
+
+        for day in range(startday, 0, -1):
+            try:
+                patsy = datetime.date(year, month, day)
+                addDir(patsy.strftime("%x"), url, mode, '', 1, year, month, day)
+            except ValueError:
+                pass # skip day
 
 
 def get_params():
