@@ -23,6 +23,7 @@ __svn_revision__ = "$Revision$"
 __settings__ = xbmcaddon.Addon(id='plugin.video.hockeystreams')
 
 __dbg__ = __settings__.getSetting("debug") == "true"
+__mark_broken_cdn4_links__ = __settings__.getSetting("mark_cdn4") == "true"
 
 hockeystreams = 'http://www.hockeystreams.com'
 archivestreams = hockeystreams + '/hockey_archives'
@@ -113,6 +114,7 @@ def soupIt(currentUrl, selector, gameType, loginRequired = False):
 
     if selector == 'input':
         found = soup.findAll('input')
+        found.extend(soup.findAll())
     else:
         found = soup.findAll(attrs={'href': gameType})
     del selector
@@ -279,7 +281,11 @@ def QUALITY(url, gamename):
     if (__dbg__):
         print ("hockeystreams: enter quality")
     games = find_qualities(url)
+    silverLinks = {}
     for k, v in games.iteritems():
+        if (__dbg__):
+            print str(games)
+        
         foundGames = soupIt(v,'input',empty, True)
         for test in foundGames:                                 ##get rid of this 'busy loop' in the next minor revision
             if (__dbg__):
@@ -287,9 +293,18 @@ def QUALITY(url, gamename):
             if 'direct_link' in test.get('id',''):
                 directLink = test['value']
                 directLinks[k] = directLink
+            if 'silverlight' in test.get('href',''):
+                print "silverBOO"
+                silverLink = test.get('href','')
+                silverLinks["silverlight"] = silverLink
+
     for name,url in directLinks.iteritems():
         qualityName = name #name[name.rindex('/'):]
+        if __mark_broken_cdn4_links__ and 'cdn-a-4' in url:
+            qualityName += "*"
         addLink(qualityName, gamename, '', url, '', 1)
+    for name,url in silverLinks.iteritems():
+        addLink("has " + name, name, '', url, '', 1)
 
 def PLAY_VIDEO(video_url):
     if (__dbg__):
