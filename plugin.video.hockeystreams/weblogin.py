@@ -37,20 +37,19 @@ import xbmc
 
 
 def check_login(source,username):
-    
     #the string you will use to check if the login is successful.
     #you may want to set it to:    username     (no quotes)
     logged_in_string = 'SIGN OUT'
 
     #search for the string in the html, without caring about upper or lower case
-    if re.search(logged_in_string,source,re.IGNORECASE):
+    #if re.search(logged_in_string, source, re.IGNORECASE):
+    if source.find(logged_in_string) >= 0:
         return True
     else:
         return False
 
 
-def doLogin(cookiepath, username, password):
-
+def doLogin(cookiepath, username, password, debug = False):
     #check if user has supplied only a folder path, or a full path
     if not os.path.isfile(cookiepath):
         #if the user supplied only a folder path, append on to the end of the path a filename.
@@ -63,14 +62,13 @@ def doLogin(cookiepath, username, password):
         pass
 
     if username and password:
-
         #the url you will request to.
         login_url = 'http://www5.hockeystreams.com/verify/login'
 
         #the header used to pretend you are a browser
         header_string = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3'
 
-	#build the form data necessary for the login
+	    #build the form data necessary for the login
         login_data = urllib.urlencode({'username':username, 'password':password,'submit':'Sign In'})#, 'memento':1, 'x':0, 'y':0, 'do':'login'})
 
         #build the request we will make
@@ -85,23 +83,22 @@ def doLogin(cookiepath, username, password):
 
         #do the login and get the response
         response = opener.open(req)
-        #source = response.read()
+        if debug:
+            print str(response)
+            source = response.read()
+            print source
         response.close()
-        #print str(response)
-        #print source
 
         cj.save(xbmc.translatePath(cookiepath))
-
-        print "cookies!" + str(cj._cookies)
+        if debug:
+            print "cookies!" + str(cj._cookies)
         #check the received html for a string that will tell us if the user is logged in
         #pass the username, which can be used to do this.
-
-
-
         url = "http://www.hockeystreams.com"
-
         page = gethtml.get(url, cj = cj)
-        #print page
+        if debug:
+            print page
+            print "nidex + " + str(page.find('SIGN OUT')) + "/" + str(len(page))
         login = check_login(page, username)
         #if login suceeded, save the cookiejar to disk
 #        if not login:

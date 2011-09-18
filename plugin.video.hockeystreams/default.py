@@ -22,12 +22,11 @@ __svn__ = "http://xbmc-hockeystreams.googlecode.com/svn/trunk/"
 __svn_revision__ = "$Revision$"
 __settings__ = xbmcaddon.Addon(id='plugin.video.hockeystreams')
 
-username = __settings__.getSetting('username')
-password = __settings__.getSetting('password')
 __dbg__ = __settings__.getSetting("debug") == "true"
+__mark_broken_cdn4_links__ = __settings__.getSetting("mark_cdn4") == "true"
 
 hockeystreams = 'http://www.hockeystreams.com'
-archivestreams = 'http://www.hockeystreams.com/hockey_archives'
+archivestreams = hockeystreams + '/hockey_archives'
 
 hqStreams = re.compile('/live_streams/.*')
 hqArchives = re.compile('/hockey_archives/0/.*/[0-9]+')
@@ -115,23 +114,22 @@ def soupIt(currentUrl, selector, gameType, loginRequired = False):
 
     if selector == 'input':
         found = soup.findAll('input')
+        found.extend(soup.findAll())
     else:
         found = soup.findAll(attrs={'href': gameType})
     del selector
+    print "hockeystreams: soupit: found count " + str(len(found))
     return found
 
-
-
-def CATEGORIES():
-    #login(username, password, currentUrl, 'login')
-    if (__dbg__):
-        print ("hockeystreams: enter categories")
-    addDir('Live Streams', hockeystreams, 1, '', 1)
-    addDir('Archived Streams', hockeystreams, 2, '', 1)
-    addDir('Login', hockeystreams, 66, '', 1)
-    addDir('IP Exception', hockeystreams, 99, '', 1)
-    addDir('Settings', hockeystreams, 69, '', 1)
-    #addDir('RSS Streams', hockeystreams, 3, '', 1)
+def get_date(day, month, year):
+    archiveMonth = str(month)
+    if len(archiveMonth) == 1:
+        archiveMonth = '0' + archiveMonth
+    archiveDay = str(day)
+    if len(archiveDay) == 1:
+        archiveDay = '0' + archiveDay
+    archiveDate =  '-'.join([archiveMonth, archiveDay, str(year)])
+    return archiveDate
 
 def addDir(name, url, mode, icon, count, year=-1, month=-1, day=-1, gamename = None):
     u = sys.argv[0] + "?url=" + urllib.quote_plus(url) + "&mode=" + str(mode) + "&name=" + urllib.quote_plus(name)
@@ -146,14 +144,13 @@ def addDir(name, url, mode, icon, count, year=-1, month=-1, day=-1, gamename = N
     liz = xbmcgui.ListItem(name, iconImage=icon, thumbnailImage=icon)
     liz.setInfo(type="Video", infoLabels={"Title": name})
     if (__dbg__):
-        print str("about to add url %s directory" % (str(u)))
-        print str("about to add modes %s  directory" % (str(mode)))
-        print str("about to add name %s  directory" % (str(name)))
+        print str("about to add url %s modes %s name %s  directory" % (u, str(mode), name))
+        print str("about to add icon: " + icon)
     ok = xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=str(u), listitem=liz, isFolder=True, totalItems=count)
     return ok
 
 def addLink(name, gamename, date, url, icon, count):
-    u = sys.argv[0] + "?url=" + urllib.quote_plus(url) + "&mode=20&name=" + urllib.quote_plus(name) + \
+    u = sys.argv[0] + "?url=" + urllib.quote_plus(url) + "&mode=2000&name=" + urllib.quote_plus(name) + \
         "&gamename=" + urllib.quote_plus(gamename)
     liz = xbmcgui.ListItem(name, iconImage=icon, thumbnailImage=icon)
     liz.setInfo(type="Video", infoLabels={"Title": name, "Date": date})
@@ -184,10 +181,14 @@ def find_hockey_game_names(url, gameType):
 def login():
     if (__dbg__):
         print ("hockeystreams: login attempt")
-    if not weblogin.doLogin(cookiepath, username, password):
+    if not __settings__.getSetting('username') or not __settings__.getSetting('password'):
+        __settings__.openSettings()
+        return False
+    if not weblogin.doLogin(cookiepath, __settings__.getSetting('username'), __settings__.getSetting('password'), __dbg__):
         if (__dbg__):
             print ("hockeystreams: login fail")
-        return
+        return False
+    return True
 
 
 def find_qualities(url):
@@ -209,6 +210,17 @@ def find_qualities(url):
     del foundQs
     return games
 
+def CATEGORIES():
+    if (__dbg__):
+        print ("hockeystreams: enter categories")
+    addDir('Live Streams', hockeystreams, 1, '', 1)
+    addDir('Archived By Date', hockeystreams, 2, '', 1)
+    addDir('Archived By Team', hockeystreams, 30, '', 1)
+    addDir('  Login', hockeystreams, 66, '', 1)
+    addDir('  IP Exception', hockeystreams, 99, '', 1)
+    
+    #addDir('RSS Streams', hockeystreams, 3, '', 1)
+
 def LIVE_GAMES(mode):
     if (__dbg__):
         print ("hockeystreams: enter live games")
@@ -221,17 +233,11 @@ def LIVE_GAMES(mode):
         gameName = gameName[offset:]
         addDir(gameName, v, mode, '', 1, gamename = gameName)
 
-def ARCHIVE_GAMES(year, month, day, mode):
+def ARCHIVE_GAMES_BY_DATE(year, month, day, mode):
     if (__dbg__):
         print ("hockeystreams: enter archive games")
-    archiveMonth = str(month)
-    if len(archiveMonth) == 1:
-        archiveMonth = '0' + archiveMonth
-    archiveDay = str(day)
-    if len(archiveDay) == 1:
-        archiveDay = '0' + archiveDay
-    archiveDate = "/" + '-'.join([archiveMonth, archiveDay, str(year)]) + "/"
-    url = archivestreams + archiveDate
+    archiveDate = get_date(day, month, year)
+    url = archivestreams + '/' + archiveDate + '/'
     strip = ARCHIVE_STRIP
     games = find_hockey_game_names(url, hqArchives)
     for k, v in games.iteritems():
@@ -240,12 +246,46 @@ def ARCHIVE_GAMES(year, month, day, mode):
         gameName = gameName[offset:]
         addDir(gameName, v, mode, '', 1, gamename = gameName)
 
-def QUALITY(url, gamename):
+def BY_TEAM(url, mode):
+    if (__dbg__):
+        print ("hockeystreams: enter team")
+    archiveDate = get_date(today.day, today.month, today.year)
+    teamNames = re.compile('/hockey_archives/'+ archiveDate + '/[a-z]+_?[a-z]?') #simplified
+    foundTeams = soupIt(url + "/" + archiveDate, "attrs", teamNames)
+    for team in foundTeams:
+        if (__dbg__):
+            print ("hockeystreams: \t\t soupfound team %s" % (str(team)))
 
+        ending = str(team['href'])
+        teamPage = hockeystreams + ending
+        teamName = os.path.basename(teamPage)
+        teamName = re.sub('_|/', ' ', teamName)
+        if (__dbg__):
+            print ("hockeystreams: \t\t team %s" % teamName)
+
+        teamGIF = hockeystreams + "/images/teams/" + teamName[0:teamName.find(' ')] + ".gif"
+        addDir(teamName, teamPage, mode, teamGIF, 82)
+
+def ARCHIVE_GAMES_BY_TEAM(url, mode):
+    if (__dbg__):
+        print ("hockeystreams: enter archive games")
+    strip = ARCHIVE_STRIP
+    games = find_hockey_game_names(url, hqArchives)
+    for k, v in games.iteritems():
+        gameName = k
+        offset = gameName.find(strip) + len(strip)
+        gameName = gameName[offset:]
+        addDir(gameName, v, mode, '', 1000, gamename = gameName)
+
+def QUALITY(url, gamename):
     if (__dbg__):
         print ("hockeystreams: enter quality")
     games = find_qualities(url)
+    silverLinks = {}
     for k, v in games.iteritems():
+        if (__dbg__):
+            print str(games)
+        
         foundGames = soupIt(v,'input',empty, True)
         for test in foundGames:                                 ##get rid of this 'busy loop' in the next minor revision
             if (__dbg__):
@@ -253,9 +293,18 @@ def QUALITY(url, gamename):
             if 'direct_link' in test.get('id',''):
                 directLink = test['value']
                 directLinks[k] = directLink
+            if 'silverlight' in test.get('href',''):
+                print "silverBOO"
+                silverLink = test.get('href','')
+                silverLinks["silverlight"] = silverLink
+
     for name,url in directLinks.iteritems():
         qualityName = name #name[name.rindex('/'):]
+        if __mark_broken_cdn4_links__ and 'cdn-a-4' in url:
+            qualityName += "*"
         addLink(qualityName, gamename, '', url, '', 1)
+    for name,url in silverLinks.iteritems():
+        addLink("has " + name, name, '', url, '', 1)
 
 def PLAY_VIDEO(video_url):
     if (__dbg__):
@@ -305,10 +354,10 @@ if (__dbg__):
     print ("year %s month %s day %s" % (year, month, day))
 
 cache = True
-if mode is None or url is None or len(url) < 1:
+if mode is None or mode == 0 or url is None or len(url) < 1:
     CATEGORIES()
 elif mode == 1:
-    LIVE_GAMES(6)
+    LIVE_GAMES(1000)
     cache = False
 elif mode == 2:
     YEAR(hockeystreams, 3)
@@ -320,56 +369,36 @@ elif mode == 4:
     DAY(hockeystreams, year, month, 5)
     cache = not (today.year == year and today.month == month)
 elif mode == 5:
-    ARCHIVE_GAMES(year, month, day, 6)
+    ARCHIVE_GAMES_BY_DATE(year, month, day, 1000)
     cache = not (today.year == year and today.month == month and today.day == day)
-elif mode == 6:
+elif mode == 30:
+    BY_TEAM(archivestreams, 31)
+elif mode == 31:
+    ARCHIVE_GAMES_BY_TEAM(url, 1000)
+elif mode == 1000:
     QUALITY(url, gamename)
     cache = False
-elif mode == 20:
+elif mode == 2000:
     PLAY_VIDEO(url)
     cache = not (today.year == year and today.month == month and today.day == day)
+
 elif mode == 66:
     if not login():
         print "failed"
-
+        addDir('failed!', hockeystreams, 0, '', 5)
+    else:
+        addDir('succeeded!', hockeystreams, 0, '', 5)
 elif mode == 99:
-    login()
-    exception_data = urllib.urlencode({'update': 'Update Exception'})
-    exception_url = hockeystreams + "/include/exception.inc.php?" + exception_data
-    read = gethtml.get(exception_url, cookiepath)
+    if not login():
+        addDir('failed!', hockeystreams, 0, '', 5)
+    else:
+        exception_data = urllib.urlencode({'update': 'Update Exception'})
+        exception_url = hockeystreams + "/include/exception.inc.php?" + exception_data
+        read = gethtml.get(exception_url, cookiepath)
+        addDir('succeeded!', hockeystreams, 0, '', 5)
 
-
-
-##rss stuff
-##---------------------------------------------------
-
-##elif mode >= 10:
-##    import rssArchives
-##    if mode == 10:
-##        rssArchives.populateRSS('hq')
-##    elif mode == 11:
-##        rssArchives.populateRSS('hd')
-##    elif mode == 12:
-##        rssArchives.populateRSS('hdp')
-
-##---------------------------------------------------
-##end of rss stuff
 if mode == 69:
-    xbmcplugin.openSettings(sys.argv[0])
+    #xbmcplugin.openSettings(sys.argv[0])
+    pass
 else:
     xbmcplugin.endOfDirectory(int(sys.argv[1]), cacheToDisc = cache)
-
-
-#def retrieveUrl(url, referer):
-#	req = urllib2.Request(url)
-#	req.add_header("User-Agent", "Mozilla/5.0 (X11; U; Linux x86_64; en-US; rv:1.9.2.3) Gecko/20100402 Namoroka/3.6.3")
-#	req.add_header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
-#	req.add_header("Accept-Language", "en-us,en;q=0.5")
-#	req.add_header("Accept-Encoding", "deflate")
-#	req.add_header("Accept-Charset", "ISO-8859-1,utf-8;q=0.7,*;q=0.7")
-#	if(referer != ""):
-#		req.add_header("Referer", referer)
-#	response = urllib2.urlopen(req)
-#	file = response.read()
-#	response.close()
-#	return file
