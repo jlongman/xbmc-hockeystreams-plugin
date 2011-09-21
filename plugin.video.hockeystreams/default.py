@@ -30,7 +30,8 @@ archivestreams = hockeystreams + '/hockey_archives'
 
 hqStreams = re.compile('/live_streams/.*')
 hqArchives = re.compile('/hockey_archives/0/.*/[0-9]+')
-playbackTypes = re.compile('/hockey_archives/0/.*/[0-9]+/[a-z_]+')
+archivePlaybackTypes = re.compile('/hockey_archives/0/.*/[0-9]+/[a-z_]+')
+livePlaybackTypes = re.compile('/live_streams/.*/[0-9]+/[a-z_]+')
 
 today = datetime.date.today()
 
@@ -195,7 +196,10 @@ def find_qualities(url):
     if (__dbg__):
         print ("hockeystreams: \t\t find qs ")
 
-    foundQs = soupIt(url, 'attrs', playbackTypes, True)
+    if 'archive' in url:
+        foundQs = soupIt(url, 'attrs', archivePlaybackTypes, True)
+    else:
+        foundQs = soupIt(url, 'attrs', livePlaybackTypes, True)
     for test in foundQs:
         if (__dbg__):
             print ("hockeystreams: \t\t soupfound qs %s" % (str(test)))
