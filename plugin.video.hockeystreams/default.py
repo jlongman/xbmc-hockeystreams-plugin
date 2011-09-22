@@ -155,8 +155,8 @@ def addDir(name, url, mode, icon, count, year=-1, month=-1, day=-1, gamename = N
     ok = xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=str(u), listitem=liz, isFolder=True, totalItems=count)
     return ok
 
-def addLink(name, gamename, date, url, icon, count):
-    u = sys.argv[0] + "?url=" + urllib.quote_plus(url) + "&mode=2000&name=" + urllib.quote_plus(name) + \
+def addLink(name, gamename, date, url, icon, count, mode = 2001):
+    u = sys.argv[0] + "?url=" + urllib.quote_plus(url) + "&mode=" + str(mode) + "&name=" + urllib.quote_plus(name) + \
         "&gamename=" + urllib.quote_plus(gamename)
     liz = xbmcgui.ListItem(name, iconImage=icon, thumbnailImage=icon)
     liz.setInfo(type="Video", infoLabels={"Title": name, "Date": date})
@@ -170,7 +170,7 @@ def find_hockey_game_names(url, gameType):
     foundGames = soupIt(url, 'attrs', gameType)
     for test in foundGames:
         if (__dbg__):
-            print ("hockeystreams: \t\t foundGames %s" % (str(test)))
+            print ("hockeystreams: \t\t foundGames %s" % str(test))
 
         ending = str(test['href'])
         gamePage = hockeystreams + ending
@@ -290,15 +290,21 @@ def QUALITY(url, gamename):
     if (__dbg__):
         print ("hockeystreams: enter quality")
     games = find_qualities(url)
+    if not __mark_broken_cdn4_links__:
+        return QUALITY_quick(games, gamename)
+    else:
+        return QUALITY_slow(games, gamename)
+
+def QUALITY_slow(games, gamename):
     silverLinks = {}
     for k, v in games.iteritems():
         if (__dbg__):
-            print str(games)
+            print "game qs: " + str(games)
         
         foundGames = soupIt(v,'input',empty, True)
         for test in foundGames:                                 ##get rid of this 'busy loop' in the next minor revision
             if (__dbg__):
-                print("hockeystreams: \t\t soupfound directs %s" % (test))
+                print("hockeystreams: \t\t soupfound directs %s" % test)
             if 'direct_link' in test.get('id',''):
                 directLink = test['value']
                 directLinks[k] = directLink
@@ -315,6 +321,25 @@ def QUALITY(url, gamename):
         addLink(qualityName, gamename, '', url, '', 1)
     for name,url in silverLinks.iteritems():
         addLink("has " + name, name, '', url, '', 1)
+
+
+
+def QUALITY_quick(games, gamename):
+    for quality, url in games.iteritems():
+        if (__dbg__):
+            print "game qs: " + str(games)
+        addLink(quality, gamename, '', url, '', 1, 2000)
+
+def QUICK_PLAY_VIDEO(almost_video_url):
+    foundGames = soupIt(almost_video_url,'input',empty, True)
+    for test in foundGames:                                 ##get rid of this 'busy loop' in the next minor revision
+        if (__dbg__):
+            print("hockeystreams: \t\t quick directs %s" % test)
+        if 'direct_link' in test.get('id',''):
+            directLink = test['value']
+            directLinks[almost_video_url] = directLink
+            PLAY_VIDEO(directLink)
+
 
 def PLAY_VIDEO(video_url):
     if (__dbg__):
@@ -367,30 +392,35 @@ cache = True
 if mode is None or mode == 0 or url is None or len(url) < 1:
     CATEGORIES()
 elif mode == 1:
+    cache = False
     LIVE_GAMES(1000)
-    cache = False
 elif mode == 2:
-    YEAR(hockeystreams, 3)
     cache = False
+    YEAR(hockeystreams, 3)
 elif mode == 3:
-    MONTH(hockeystreams, year, 4)
     cache = today.year != year
+    MONTH(hockeystreams, year, 4)
 elif mode == 4:
-    DAY(hockeystreams, year, month, 5)
     cache = not (today.year == year and today.month == month)
+    DAY(hockeystreams, year, month, 5)
 elif mode == 5:
-    ARCHIVE_GAMES_BY_DATE(year, month, day, 1000)
     cache = not (today.year == year and today.month == month and today.day == day)
+    ARCHIVE_GAMES_BY_DATE(year, month, day, 1000)
 elif mode == 30:
     BY_TEAM(archivestreams, 31)
 elif mode == 31:
+    cache = False
     ARCHIVE_GAMES_BY_TEAM(url, 1000)
 elif mode == 1000:
-    QUALITY(url, gamename)
     cache = False
+    QUALITY(url, gamename)
 elif mode == 2000:
-    PLAY_VIDEO(url)
     cache = not (today.year == year and today.month == month and today.day == day)
+    QUICK_PLAY_VIDEO(url)
+elif mode == 2001:
+    cache = not (today.year == year and today.month == month and today.day == day)
+    PLAY_VIDEO(url)
+
 
 elif mode == 66:
     if not login():
