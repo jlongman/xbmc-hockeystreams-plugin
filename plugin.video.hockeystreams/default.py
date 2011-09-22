@@ -7,7 +7,7 @@ import xbmcplugin, xbmcaddon, xbmcgui
 super_verbose_logging = False
 
 __addonname__ = 'plugin.video.hockeystreams'
-__datapath__ = os.path.join('special://profile/addon_data/',__addonname__)
+__datapath__ = 'special://profile/addon_data/' +__addonname__
 
 #important! deals with a bug where errors are thrown if directory does not exist.
 if not os.path.exists: os.makedirs(__datapath__)
@@ -101,7 +101,12 @@ def soupIt(currentUrl, selector, gameType, loginRequired = False):
             print (
             "hockeystreams: enter soupIt  url %s selector %s gameType %s" % (currentUrl, selector, "empty"))
     if loginRequired:
-        html = gethtml.get(currentUrl, cookiepath)
+        try:
+            html = gethtml.get(currentUrl, cookiepath)
+        except IndexError:
+            __settings__.openSettings()
+            login()
+            return soupIt(currentUrl, selector, gameType, loginRequired)
     else:
         html = gethtml.get(currentUrl)
 
@@ -297,8 +302,9 @@ def QUALITY(url, gamename):
             if 'direct_link' in test.get('id',''):
                 directLink = test['value']
                 directLinks[k] = directLink
-            if 'silverlight' in test.get('href',''):
-                print "silverBOO"
+            if 'silverlight' in test.get('href','') and 'archive' in test.get('href',''):
+                if (__dbg__):
+                    print "silverBOO"
                 silverLink = test.get('href','')
                 silverLinks["silverlight"] = silverLink
 
@@ -398,8 +404,11 @@ elif mode == 99:
     else:
         exception_data = urllib.urlencode({'update': 'Update Exception'})
         exception_url = hockeystreams + "/include/exception.inc.php?" + exception_data
-        read = gethtml.get(exception_url, cookiepath)
-        addDir('succeeded!', hockeystreams, 0, '', 5)
+        try:
+            read = gethtml.get(exception_url, cookiepath)
+            addDir('succeeded!', hockeystreams, 0, '', 5)
+        except:
+            addDir('failed!', hockeystreams, 0, '', 5)
 
 if mode == 69:
     #xbmcplugin.openSettings(sys.argv[0])

@@ -53,7 +53,25 @@ def doLogin(cookiepath, username, password, debug = False):
     if not os.path.isfile(cookiepath):
         #if the user supplied only a folder path, append on to the end of the path a filename.
         cookiepath = os.path.join(cookiepath,'cookies.lwp')
-        
+    if not os.path.isdir(os.path.dirname(cookiepath)):
+        try:
+            os.remove(cookiepath)
+        except:
+            pass
+        try:
+            os.makedirs(os.path.dirname(cookiepath))
+        except:
+            cookiepath = os.path.join(".", "addons_data", "plugin.video.hockeystreams", "cookies.lwp")
+            if debug:
+                print "falling back on manual path: " + cookiepath
+
+            if not os.path.isdir(os.path.dirname(cookiepath)):
+                try:
+                    os.remove(cookiepath)
+                except:
+                    pass
+                os.makedirs(os.path.dirname(cookiepath))
+
     #delete any old version of the cookie file
     try:
         os.remove(cookiepath)
