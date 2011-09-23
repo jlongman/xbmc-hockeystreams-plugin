@@ -42,6 +42,18 @@ empty = None
 directLinks = {}
 games = {}
 
+def get_date(day, month, year):
+    archiveMonth = str(month)
+    if len(archiveMonth) == 1:
+        archiveMonth = '0' + archiveMonth
+    archiveDay = str(day)
+    if len(archiveDay) == 1:
+        archiveDay = '0' + archiveDay
+    archiveDate = '-'.join([archiveMonth, archiveDay, str(year)])
+    return archiveDate
+
+archiveDate = get_date(today.day, today.month, today.year)
+
 def YEAR(url, mode):
     for year in range(today.year, 2009, -1):
         if year == today.year:
@@ -127,15 +139,6 @@ def soupIt(currentUrl, selector, gameType, loginRequired = False):
     print "hockeystreams: soupit: found count " + str(len(found))
     return found
 
-def get_date(day, month, year):
-    archiveMonth = str(month)
-    if len(archiveMonth) == 1:
-        archiveMonth = '0' + archiveMonth
-    archiveDay = str(day)
-    if len(archiveDay) == 1:
-        archiveDay = '0' + archiveDay
-    archiveDate =  '-'.join([archiveMonth, archiveDay, str(year)])
-    return archiveDate
 
 def addDir(name, url, mode, icon, count, year=-1, month=-1, day=-1, gamename = None):
     u = sys.argv[0] + "?url=" + urllib.quote_plus(url) + "&mode=" + str(mode) + "&name=" + urllib.quote_plus(name)
@@ -175,6 +178,9 @@ def find_hockey_game_names(url, gameType):
         ending = str(test['href'])
         gamePage = hockeystreams + ending
         gameName = os.path.dirname(gamePage)
+        if "archive" in url and gameName.endswith(archiveDate):
+            if (__dbg__): print "\t\t\tskipping " + str(ending)
+            continue
         gameName = re.sub('_|/', ' ', gameName)
 
         if (__dbg__):
