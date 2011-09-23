@@ -278,7 +278,11 @@ def BY_TEAM(url, mode):
         if (__dbg__):
             print ("hockeystreams: \t\t team %s" % teamName)
 
-        teamGIF = hockeystreams + "/images/teams/" + teamName[0:teamName.find(' ')] + ".gif"
+        image_name = teamName[0:teamName.rfind(' ')]
+        image_name = image_name.replace(' ','')
+#        teamGIF = "http://www5.hockeystreams.com/images/teams/big/" + image_name + ".gif"
+        teamGIF = "http://www5.hockeystreams.com/images/teams/" + image_name + ".gif"
+        if (__dbg__): print ("hockeystreams: \t\t team %s %s" % (teamName, teamGIF))
         addDir(teamName, teamPage, mode, teamGIF, 82)
 
 def ARCHIVE_GAMES_BY_TEAM(url, mode):
