@@ -1,5 +1,4 @@
 import weblogin, gethtml, hs_rss
-from operator import itemgetter
 
 import urllib, re, os, datetime, sys
 from BeautifulSoup import BeautifulSoup
@@ -56,6 +55,7 @@ def get_date(day, month, year):
 archiveDate = get_date(today.day, today.month, today.year)
 
 def YEAR(url, mode):
+    addDir("Last 15 games", url, 6, '', 1)
     for year in range(today.year, 2009, -1):
         if year == today.year:
             monthsCount = today.month
@@ -246,9 +246,19 @@ def LIVE_GAMES(mode):
     if (__dbg__):
         print ("hockeystreams: enter live games")
     html = urllib.urlopen("http://www4.hockeystreams.com/rss/streams.php")
-    games = hs_rss.get_live_streams(html, __dbg__)
+    games = hs_rss.get_rss_streams(html, __dbg__)
     for gameName, url, date, real_date in sorted(games, key = lambda game: game[3]):
         gameName = gameName + " " + date.split(' - ', 1)[1]
+        addDir(gameName, url, mode, '', 1, gamename = gameName, fullDate = real_date)
+
+def LAST_15_GAMES(mode):
+    xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_NONE)
+    if (__dbg__):
+        print ("hockeystreams: enter live games")
+    html = urllib.urlopen("http://www6.hockeystreams.com/rss/archives.php")
+    games = hs_rss.get_archive_rss_streams(html, __dbg__)
+    for gameName, url, date, real_date in sorted(games, key = lambda game: game[3], reverse=True):
+        gameName = gameName + " " + date
         addDir(gameName, url, mode, '', 1, gamename = gameName, fullDate = real_date)
 
 def ARCHIVE_GAMES_BY_DATE(year, month, day, mode):
@@ -419,6 +429,9 @@ elif mode == 4:
 elif mode == 5:
     cache = not (today.year == year and today.month == month and today.day == day)
     ARCHIVE_GAMES_BY_DATE(year, month, day, 1000)
+elif mode == 6:
+    cache = False
+    LAST_15_GAMES(1000)
 elif mode == 30:
     BY_TEAM(archivestreams, 31)
 elif mode == 31:

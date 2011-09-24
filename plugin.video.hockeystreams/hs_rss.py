@@ -12,7 +12,11 @@ def getText(nodelist):
             rc.append(node.data)
     return ''.join(rc)
 
-def get_live_streams(rssBody, __debug__) :
+
+def get_archive_rss_streams(rssBody, __debug__):
+    return get_rss_streams(rssBody, False, __debug__)
+
+def get_rss_streams(rssBody, live = True, __debug__ = False):
     gameDom = minidom.parse(rssBody)
     games = []
     for game in gameDom.getElementsByTagName('item'):
@@ -24,10 +28,14 @@ def get_live_streams(rssBody, __debug__) :
 #        if __debug__:
         date = date.strip()
         print "date " + date + "rest " + rest
-        match = re.search( 'href="(http://.*?[0-9]+/)[a-z_]+"', rest)
-        url = match.group(1)
+        if live:
+            url = re.search( 'href="(http://.*?[0-9]+/)[a-z_]+"', rest).group(1)
+            real_date = time.strptime(date, "%m/%d/%Y - %I:%M %p")
+        else:
+            url = re.search( 'href="(/.*?/[0-9]+/)[a-z_]+"', rest).group(1)
+            real_date = time.strptime(date, "%m/%d/%Y")
+
 #        if __debug__:
-        real_date = time.strptime(date, "%m/%d/%Y - %I:%M %p")
         print "url " + url
         games.append(
             (title, url, date, real_date )
