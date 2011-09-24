@@ -1,4 +1,5 @@
-import weblogin, gethtml
+import weblogin, gethtml, hs_rss
+from operator import itemgetter
 
 import urllib, re, os, datetime, sys
 from BeautifulSoup import BeautifulSoup
@@ -140,7 +141,7 @@ def soupIt(currentUrl, selector, gameType, loginRequired = False):
     return found
 
 
-def addDir(name, url, mode, icon, count, year=-1, month=-1, day=-1, gamename = None):
+def addDir(name, url, mode, icon, count, year=-1, month=-1, day=-1, gamename = None, fullDate = None):
     u = sys.argv[0] + "?url=" + urllib.quote_plus(url) + "&mode=" + str(mode) + "&name=" + urllib.quote_plus(name)
     if gamename is not None:
         u += "&gamename=" + urllib.quote_plus(gamename)
@@ -151,7 +152,11 @@ def addDir(name, url, mode, icon, count, year=-1, month=-1, day=-1, gamename = N
             if day > 0:
                 u += "&day=" + str(day)
     liz = xbmcgui.ListItem(name, iconImage=icon, thumbnailImage=icon)
-    liz.setInfo(type="Video", infoLabels={"Title": name})
+    if fullDate is not None:
+        liz.setInfo(type="Video", infoLabels={"Title": name, "Date" : str(fullDate)})
+    else:
+        liz.setInfo(type="Video", infoLabels={"Title": name})
+
     if (__dbg__):
         print str("about to add url %s modes %s name %s  directory" % (u, str(mode), name))
         print str("about to add icon: " + icon)
@@ -228,7 +233,7 @@ def find_qualities(url):
 def CATEGORIES():
     if (__dbg__):
         print ("hockeystreams: enter categories")
-    addDir('Live Streams', hockeystreams, 1, '', 1)
+    addDir('Today\'s Streams', hockeystreams, 1, '', 1)
     addDir('Archived By Date', hockeystreams, 2, '', 1)
     addDir('Archived By Team', hockeystreams, 30, '', 1)
     addDir('  Login', hockeystreams, 66, '', 1)
@@ -237,16 +242,14 @@ def CATEGORIES():
     #addDir('RSS Streams', hockeystreams, 3, '', 1)
 
 def LIVE_GAMES(mode):
+    xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_NONE)
     if (__dbg__):
         print ("hockeystreams: enter live games")
-    url = hockeystreams
-    strip = LIVE_STRIP
-    games = find_hockey_game_names(url, hqStreams)
-    for k, v in games.iteritems():
-        gameName = k
-        offset = gameName.index(strip) + len(strip)
-        gameName = gameName[offset:]
-        addDir(gameName, v, mode, '', 1, gamename = gameName)
+    html = urllib.urlopen("http://www4.hockeystreams.com/rss/streams.php")
+    games = hs_rss.get_live_streams(html, __dbg__)
+    for gameName, url, date, real_date in sorted(games, key = lambda game: game[3]):
+        gameName = gameName + " " + date.split(' - ', 1)[1]
+        addDir(gameName, url, mode, '', 1, gamename = gameName, fullDate = real_date)
 
 def ARCHIVE_GAMES_BY_DATE(year, month, day, mode):
     if (__dbg__):
@@ -433,12 +436,14 @@ elif mode == 2001:
 
 
 elif mode == 66:
+    cache = False
     if not login():
         print "failed"
         addDir('failed!', hockeystreams, 0, '', 5)
     else:
         addDir('succeeded!', hockeystreams, 0, '', 5)
 elif mode == 99:
+    cache = False
     if not login():
         addDir('failed!', hockeystreams, 0, '', 5)
     else:
