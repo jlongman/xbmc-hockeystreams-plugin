@@ -22,21 +22,24 @@ def get_rss_streams(rssBody, live = True, __debug__ = False):
     for game in gameDom.getElementsByTagName('item'):
         title = getText(game.getElementsByTagName('title')[0].childNodes)
         description = getText(game.getElementsByTagName('description')[0].childNodes)
-#        if __debug__:
-        print "title " + title + " description " + description
+        if __debug__:
+            print "title " + title + " description " + description
         date, rest = description.split('<', 1)
-#        if __debug__:
         date = date.strip()
-        print "date " + date + "rest " + rest
+        if __debug__:
+            print "date " + date + "rest " + rest
         if live:
             url = re.search( 'href="(http://.*?[0-9]+/)[a-z_]+"', rest).group(1)
-            real_date = time.strptime(date, "%m/%d/%Y - %I:%M %p")
+            if "Final" in date:
+                real_date = time.strptime(date, "%m/%d/%Y - Final")
+            else:
+                real_date = time.strptime(date, "%m/%d/%Y - %I:%M %p")
         else:
             url = re.search( 'href="(/.*?/[0-9]+/)[a-z_]+"', rest).group(1)
             real_date = time.strptime(date, "%m/%d/%Y")
 
-#        if __debug__:
-        print "url " + url
+        if __debug__:
+            print "url " + url
         games.append(
             (title, url, date, real_date )
         )

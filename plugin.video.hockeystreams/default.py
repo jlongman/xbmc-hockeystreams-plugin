@@ -133,7 +133,7 @@ def soupIt(currentUrl, selector, gameType, loginRequired = False):
 
     if selector == 'input':
         found = soup.findAll('input')
-        found.extend(soup.findAll())
+        found.extend(soup.findAll('href'))
     else:
         found = soup.findAll(attrs={'href': gameType})
     del selector
@@ -167,7 +167,7 @@ def addLink(name, gamename, date, url, icon, count, mode = 2001):
     u = sys.argv[0] + "?url=" + urllib.quote_plus(url) + "&mode=" + str(mode) + "&name=" + urllib.quote_plus(name) + \
         "&gamename=" + urllib.quote_plus(gamename)
     liz = xbmcgui.ListItem(name, iconImage=icon, thumbnailImage=icon)
-    liz.setInfo(type="Video", infoLabels={"Title": name, "Date": date})
+    liz.setInfo(type="Video", infoLabels={"Title": gamename, "Date": date})
     liz.setProperty('isPlayable', 'true')
     if (__dbg__):
         print ("about to add %s %s %d link" % (name, u, int(count)))
@@ -366,9 +366,9 @@ def QUICK_PLAY_VIDEO(almost_video_url):
 
 def PLAY_VIDEO(video_url):
     if (__dbg__):
-        print ("hockeystreams: enter play")
+        print ("hockeystreams: enter play (gamename " + gamename + ")")
     # cool, got it, now create and open the video
-    liz = xbmcgui.ListItem(name, path = video_url)
+    liz = xbmcgui.ListItem(gamename, path = video_url)
     liz.setInfo(type = "Video", infoLabels = {"Title": gamename})
     liz.setProperty('isPlayable', 'true')
     xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, liz)
