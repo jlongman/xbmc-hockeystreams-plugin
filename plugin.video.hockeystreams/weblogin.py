@@ -112,7 +112,7 @@ def doLogin(cookiepath, username, password, debug = False):
         #check the received html for a string that will tell us if the user is logged in
         #pass the username, which can be used to do this.
         url = "http://www.hockeystreams.com"
-        page = gethtml.get(url, cj = cj)
+        page = gethtml.get(url, cj = cj, debug = debug)
         if debug:
             print page
             print "nidex + " + str(page.find('SIGN OUT')) + "/" + str(len(page))

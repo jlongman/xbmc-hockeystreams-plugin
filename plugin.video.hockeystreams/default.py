@@ -115,13 +115,13 @@ def soupIt(currentUrl, selector, gameType, loginRequired = False):
             "hockeystreams: enter soupIt  url %s selector %s gameType %s" % (currentUrl, selector, "empty"))
     if loginRequired:
         try:
-            html = gethtml.get(currentUrl, cookiepath)
+            html = gethtml.get(currentUrl, cookiepath=cookiepath, debug=__dbg__)
         except IndexError:
             __settings__.openSettings()
             login()
             return soupIt(currentUrl, selector, gameType, loginRequired)
     else:
-        html = gethtml.get(currentUrl)
+        html = gethtml.get(currentUrl, debug=__dbg__)
 
     if (__dbg__ and super_verbose_logging):
         print ("hockeystreams: \t\tfetch browser result %s " % html)
@@ -259,6 +259,7 @@ def LAST_15_GAMES(mode):
     games = hs_rss.get_archive_rss_streams(html, __dbg__)
     for gameName, url, date, real_date in sorted(games, key = lambda game: game[3], reverse=True):
         gameName = gameName + " " + date
+        url = hockeystreams + url
         addDir(gameName, url, mode, '', 1, gamename = gameName, fullDate = real_date)
 
 def ARCHIVE_GAMES_BY_DATE(year, month, day, mode):
@@ -463,7 +464,7 @@ elif mode == 99:
         exception_data = urllib.urlencode({'update': 'Update Exception'})
         exception_url = hockeystreams + "/include/exception.inc.php?" + exception_data
         try:
-            read = gethtml.get(exception_url, cookiepath)
+            read = gethtml.get(exception_url, cookiepath, __dbg__)
             addDir('succeeded!', hockeystreams, 0, '', 5)
         except:
             addDir('failed!', hockeystreams, 0, '', 5)
