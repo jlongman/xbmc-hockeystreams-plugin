@@ -1,6 +1,7 @@
 from xml.dom import minidom
 import re
 import time
+import datetime
 
 __author__ = 'longman'
 
@@ -33,7 +34,10 @@ def get_rss_streams(rssBody, live = True, __debug__ = False):
             if "Final" in date:
                 real_date = time.strptime(date, "%m/%d/%Y - Final")
             else:
-                real_date = time.strptime(date, "%m/%d/%Y - %I:%M %p")
+                try:
+                    real_date = time.strptime(date, "%m/%d/%Y - %I:%M %p")
+                except:
+                    real_date = datetime.date.today()
         else:
             url = re.search( 'href="(/.*?/[0-9]+/)[a-z_]+"', rest).group(1)
             real_date = time.strptime(date, "%m/%d/%Y")
