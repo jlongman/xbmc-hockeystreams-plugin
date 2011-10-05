@@ -15,8 +15,8 @@ cookiepath = __datapath__
 
 
 __plugin__ = "Hockeystreams"
-__author__ = "Fe4r"
-__version__ = "1.3.1"
+__author__ = "wotever"
+__version__ = "1.7.0"
 __url__ = "http://code.google.com/p/xbmc-hockeystreams/"
 __svn__ = "http://xbmc-hockeystreams.googlecode.com/svn/trunk/"
 __svn_revision__ = "$Revision$"
