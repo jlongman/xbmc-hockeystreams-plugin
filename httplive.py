@@ -3,6 +3,7 @@ from abstract import AbstractHockey
 
 from BeautifulSoup import BeautifulSoup
 import xbmcplugin, xbmcaddon, xbmcgui
+import gethtml
 import hs_rss
 
 __author__ = 'longman'
@@ -36,13 +37,15 @@ class IStreamHockey(AbstractHockey):
         html = urllib.urlopen(iStreamLive)
         games = hs_rss.get_rss_streams(html, _debug_ = self.__dbg__)
         for gameName, url, date, real_date in sorted(games, key = lambda game: game[3]):
+            if url is None or url == '':
+                gameName = "N/A " + gameName
             if '-' in date:
                 gameName = gameName + " " + date.split(' - ', 1)[1]
-            #self.util.addDir(gameName, url, mode, '', 1, gamename = gameName, fullDate = real_date)
-            self.util.addLink(gameName, gameName, real_date, url, '', 1, mode)
+            self.util.addDir(gameName, url, mode, '', 0, gamename = gameName, fullDate = real_date)
+                #self.util.addLink(gameName, gameName, real_date, url, '', 1, mode)
 
     def LAST_15_GAMES(self, mode):
-        mode = 2001
+        #mode = 2001
         xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_NONE)
         if self.__dbg__:            print ("hockeystreams: enter live games")
         urlDate = self.get_date(self.today.day, self.today.month, self.today.year, '/')
@@ -50,10 +53,19 @@ class IStreamHockey(AbstractHockey):
         games = hs_rss.get_archive_rss_streams(html, _debug_ = self.__dbg__)
         for gameName, url, date, real_date in sorted(games, key = lambda game: game[3], reverse=True):
             gameName = gameName + " " + date
-            self.util.addLink(gameName, gameName, real_date, url, '', 1, mode)
+            #self.util.addLink(gameName, gameName, real_date, url, '', 1, mode)
+            self.util.addDir(gameName, url, mode, '', 0, gamename = gameName, fullDate = real_date)
+        urlDate = self.get_date(self.today.day - 1, self.today.month, self.today.year, '/')
+        html = urllib.urlopen(iStreamDate +  urlDate)
+        games = hs_rss.get_archive_rss_streams(html, _debug_ = self.__dbg__)
+        for gameName, url, date, real_date in sorted(games, key = lambda game: game[3], reverse=True):
+            gameName = gameName + " " + date
+            #self.util.addLink(gameName, gameName, real_date, url, '', 1, mode)
+            self.util.addDir(gameName, url, mode, '', 0, gamename = gameName, fullDate = real_date)
 
     def ARCHIVE_GAMES_BY_DATE(self, year, month, day):
-        mode = 2001
+        #mode = 2001
+        mode = 1000
         if self.__dbg__:            print ("hockeystreams: enter archive games")
         archiveDate = self.get_date(day, month, year, '/')
         dateUrl = iStreamDate + archiveDate
@@ -61,8 +73,8 @@ class IStreamHockey(AbstractHockey):
         games = hs_rss.get_archive_rss_streams(html, _debug_ = self.__dbg__)
         for gameName, url, date, real_date in sorted(games, key = lambda game: game[3], reverse=True):
             gameName = gameName + " " + date
-#            self.util.addDir(gameName, url, mode, '', 1, gamename = gameName, fullDate = real_date)
-            self.util.addLink(gameName, gameName, real_date, url, '', 1, mode)
+            self.util.addDir(gameName, url, mode, '', 0, gamename = gameName, fullDate = real_date)
+#            self.util.addLink(gameName, gameName, real_date, url, '', 1, mode)
 
     def BY_TEAM(self, mode):
         url = archivestreams
@@ -85,10 +97,36 @@ class IStreamHockey(AbstractHockey):
             self.util.addDir(teamName, teamPage, mode, teamGIF, 82)
 
     def ARCHIVE_GAMES_BY_TEAM(self, url, mode):
-        mode = 2001
+        #mode = 2001
         if self.__dbg__: print ("hockeystreams: enter archive games")
         html = urllib.urlopen(url)
         games = hs_rss.get_archive_rss_streams(html, _debug_ = self.__dbg__)
         for gameName, url, date, real_date in sorted(games, key = lambda game: game[3], reverse=True):
             gameName = gameName + " " + date
-            self.util.addLink(gameName, gameName, real_date, url, '', 1, mode)
+            #self.util.addLink(gameName, gameName, real_date, url, '', 1, mode)
+            self.util.addDir(gameName, url, mode, '', 0, gamename = gameName, fullDate = real_date)
+
+    bandwidthMatch = re.compile("BANDWIDTH=([0-9]+),?")
+
+    def QUALITY(self, url, gamename):
+        if self.__dbg__: print "hockeystreams: enter quality"
+        mode = 2001
+        real_date = str(self.today) # TODO
+        # add the m3u8 first
+        gameName = "Live " + gamename
+        self.util.addLink(gameName, gameName, real_date, url, '', 1, mode)
+        # then add the composed feeds
+        if self.__dbg__: print "hockeystreams reading " + url
+        m3u8Outer = gethtml.get(url).splitlines()
+        if "#EXTM3U" in m3u8Outer[0]:#.readline():
+            bandwidthLine = True
+            loops = m3u8Outer
+            for line in loops[1:]:
+                line = line.strip()
+                if bandwidthLine:
+                    bandwidth = re.search(self.bandwidthMatch, line).group(1)
+                    gameName = str(int(bandwidth)/1000) + "Kbps " + gamename
+                else:
+                    url = line
+                    self.util.addLink(gameName, gameName, real_date, url, '', 1, mode)
+                bandwidthLine = not bandwidthLine

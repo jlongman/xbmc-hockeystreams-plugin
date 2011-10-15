@@ -40,8 +40,7 @@ class HockeyUtil:
         liz = xbmcgui.ListItem(name, iconImage=icon, thumbnailImage=icon)
         liz.setInfo(type="Video", infoLabels={"Title": gamename, "Date": date})
         liz.setProperty('isPlayable', 'true')
-        if self.__dbg__:
-            print ("about to add %s %s %d link" % (name, u, int(count)))
+        if self.__dbg__: print ("about to add %s %s %d link" % (name, u, int(count)))
         ok = xbmcplugin.addDirectoryItem(int(sys.argv[1]), u, liz, isFolder=False, totalItems=count)
         return ok
 
