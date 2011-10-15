@@ -21,7 +21,7 @@ class AbstractHockey(object):
 
 
     def YEAR(self, url, mode):
-        self.util.addDir("Last 15 games", url, 6, '', 1)
+        self.util.addDir(self.util.__settings__.getLocalizedString(40200), url, 6, '', 1)
         for year in range(self.today.year, 2009, -1):
             if year == self.today.year:
                 monthsCount = self.today.month

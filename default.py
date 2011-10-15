@@ -1,6 +1,6 @@
 import urllib,  os, sys, datetime
 
-import xbmcplugin, xbmcaddon, xbmcgui
+import xbmc, xbmcplugin, xbmcaddon, xbmcgui
 
 from legacy import LegacyHockey
 from util import HockeyUtil
@@ -48,11 +48,11 @@ def get_params():
 def CATEGORIES():
     if __dbg__:
         print ("hockeystreams: enter categories")
-    hockeyUtil.addDir('Today\'s Streams', hockeystreams, 1, '', 1)
-    hockeyUtil.addDir('Archived By Date', hockeystreams, 2, '', 1)
-    hockeyUtil.addDir('Archived By Team', hockeystreams, 30, '', 1)
-    hockeyUtil.addDir('  Login', hockeystreams, 66, '', 1)
-    hockeyUtil.addDir('  IP Exception', hockeystreams, 99, '', 1)
+    hockeyUtil.addDir(__settings__.getLocalizedString(40100), hockeystreams, 1, '', 1)
+    hockeyUtil.addDir(__settings__.getLocalizedString(40101), hockeystreams, 2, '', 1)
+    hockeyUtil.addDir(__settings__.getLocalizedString(40102), hockeystreams, 30, '', 1)
+    hockeyUtil.addDir('  '+__settings__.getLocalizedString(40103), hockeystreams, 66, '', 1)
+    hockeyUtil.addDir('  '+__settings__.getLocalizedString(40104), hockeystreams, 99, '', 1)
     
     #addDir('RSS Streams', hockeystreams, 3, '', 1)
 
@@ -160,21 +160,21 @@ elif mode == 66:
     cache = False
     if not hockeyUtil.login():
         print "failed"
-        hockeyUtil.addDir('failed!', hockeystreams, 0, '', 5)
+        hockeyUtil.addDir(__settings__.getLocalizedString(40001), hockeystreams, 0, '', 5)
     else:
-        hockeyUtil.addDir('succeeded!', hockeystreams, 0, '', 5)
+        hockeyUtil.addDir(__settings__.getLocalizedString(40000), hockeystreams, 0, '', 5)
 elif mode == 99:
     cache = False
     if not hockeyUtil.login():
-        hockeyUtil.addDir('failed!', hockeystreams, 0, '', 5)
+        hockeyUtil.addDir(__settings__.getLocalizedString(40001), hockeystreams, 0, '', 5)
     else:
         exception_data = urllib.urlencode({'update': 'Update Exception'})
         exception_url = hockeystreams + "/include/exception.inc.php?" + exception_data
         try:
             read = gethtml.get(exception_url, cookiepath, __dbg__)
-            hockeyUtil.addDir('succeeded!', hockeystreams, 0, '', 5)
+            hockeyUtil.addDir(__settings__.getLocalizedString(40000), hockeystreams, 0, '', 5)
         except:
-            hockeyUtil.addDir('failed!', hockeystreams, 0, '', 5)
+            hockeyUtil.addDir(__settings__.getLocalizedString(40001), hockeystreams, 0, '', 5)
 
 if mode == 69:
     #xbmcplugin.openSettings(sys.argv[0])
