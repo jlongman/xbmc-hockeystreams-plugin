@@ -26,7 +26,7 @@ def get_rss_streams(rssBody, live = True, _debug_ = False):
         description = getText(game.getElementsByTagName('description')[0].childNodes)
         if _debug_:
             print "title " + title + " description " + description
-        if live:
+        if live and '<a' in description:
             date, rest = description.strip().split('<a', 1)
             date = date.strip()
             if date.endswith('-'): #ongoing
@@ -39,9 +39,10 @@ def get_rss_streams(rssBody, live = True, _debug_ = False):
         if _debug_:
             print "date " + date + " rest " + rest
         links = game.getElementsByTagName('link')
+        url = ""
         if len(links) > 0 and len(links[0].childNodes) > 0:
             url = getText(links[0].childNodes)
-        else:
+        elif 'href' in rest:
             if live:
                 url = re.search('href="(http://.*?[0-9]+/)[a-z_]+"', rest).group(1)
             else:

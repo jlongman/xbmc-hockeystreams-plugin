@@ -44,7 +44,8 @@ class LegacyHockey(AbstractHockey):
             url = hockeystreams + url
             self.util.addDir(gameName, url, mode, '', 1, gamename = gameName, fullDate = real_date)
 
-    def ARCHIVE_GAMES_BY_DATE(self, year, month, day, mode):
+    def ARCHIVE_GAMES_BY_DATE(self, year, month, day):
+        mode = 1000
         if self.__dbg__:            print ("hockeystreams: enter archive games")
         archiveDate = self.get_date(day, month, year)
         url = archivestreams + '/' + archiveDate + '/'

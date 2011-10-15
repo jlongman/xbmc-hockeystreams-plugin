@@ -3,6 +3,7 @@ import urllib,  os, sys, datetime
 import xbmcplugin, xbmcaddon, xbmcgui
 
 from legacy import LegacyHockey
+from httplive import IStreamHockey
 from util import HockeyUtil
 
 import gethtml
@@ -16,7 +17,7 @@ cookiepath = __datapath__
 
 __plugin__ = "Hockeystreams"
 __author__ = "wotever"
-__version__ = "1.8.0"
+__version__ = "2.0.0"
 __url__ = "https://github.com/jlongman/xbmc-hockeystreams-plugin/"
 __settings__ = xbmcaddon.Addon(id='plugin.video.hockeystreams')
 
@@ -117,7 +118,8 @@ if __dbg__:
 
 
 
-hockey = LegacyHockey(hockeyUtil, __mark_broken_cdn4_links__, __dbg__)
+#hockey = LegacyHockey(hockeyUtil, __mark_broken_cdn4_links__, __dbg__)
+hockey = IStreamHockey(hockeyUtil, __dbg__)
 
 cache = True
 if mode is None or mode == 0 or url is None or len(url) < 1:
@@ -136,7 +138,7 @@ elif mode == 4:
     hockey.DAY(hockeystreams, year, month, 5)
 elif mode == 5:
     cache = not (today.year == year and today.month == month and today.day == day)
-    hockey.ARCHIVE_GAMES_BY_DATE(year, month, day, 1000)
+    hockey.ARCHIVE_GAMES_BY_DATE(year, month, day)
 elif mode == 6:
     cache = False
     hockey.LAST_15_GAMES(1000)

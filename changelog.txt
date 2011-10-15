@@ -1,3 +1,10 @@
+Version 2.0.0 (pre-release)
+- in preparation for Eden
+-- Eden supports HTTP Live Streaming (roku and iStream feeds)
+-- but not very well
+-- hardwire to default 
+Version 1.8.0 (pre-release)
+- refactor in prep for Eden
 Version 1.7.1
 - FIX: hockeystreams.com changed the RSS format for 'Today's Streams'
 Version 1.7.0

@@ -9,14 +9,14 @@ class AbstractHockey(object):
         self.today = today
         self.archiveDate = self.get_date(today.day, today.month, today.year)
 
-    def get_date(self, day, month, year):
+    def get_date(self, day, month, year, sep = '-'):
         archiveMonth = str(month)
         if len(archiveMonth) == 1:
             archiveMonth = '0' + archiveMonth
         archiveDay = str(day)
         if len(archiveDay) == 1:
             archiveDay = '0' + archiveDay
-        archiveDate = '-'.join([archiveMonth, archiveDay, str(year)])
+        archiveDate = sep.join([archiveMonth, archiveDay, str(year)])
         return archiveDate
 
 
@@ -54,6 +54,3 @@ class AbstractHockey(object):
                 self.util.addDir(patsy.strftime("%x"), url, mode, '', 1, year, month, day)
             except ValueError:
                 pass # skip day
-
-
-    
