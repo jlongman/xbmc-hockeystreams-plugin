@@ -125,7 +125,7 @@ class IStreamHockey(AbstractHockey):
                 line = line.strip()
                 if bandwidthLine:
                     bandwidth = re.search(self.bandwidthMatch, line).group(1)
-                    gameName = str(int(bandwidth)/1000) + "Kbps " + gamename
+                    gameName = str(int(bandwidth)/1000) + self.util.__settings__.getLocalizedString(40500) + " " + gamename
                 else:
                     url = line
                     self.util.addLink(gameName, gameName, real_date, url, '', 1, mode)
