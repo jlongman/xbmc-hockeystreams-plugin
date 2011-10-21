@@ -178,8 +178,4 @@ elif mode == 99:
         except:
             hockeyUtil.addDir(__settings__.getLocalizedString(40001), hockeystreams, 0, '', 5)
 
-if mode == 69:
-    #xbmcplugin.openSettings(sys.argv[0])
-    pass
-else:
-    xbmcplugin.endOfDirectory(int(sys.argv[1]), cacheToDisc = cache)
+xbmcplugin.endOfDirectory(int(sys.argv[1]), cacheToDisc = cache)
