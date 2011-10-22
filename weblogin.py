@@ -50,33 +50,24 @@ def check_login(source,username):
 
 def doLogin(cookiepath, username, password, debug = False):
     #check if user has supplied only a folder path, or a full path
-    if not os.path.isfile(cookiepath):
-        #if the user supplied only a folder path, append on to the end of the path a filename.
-        cookiepath = os.path.join(cookiepath,'cookies.lwp')
+#    if not os.path.isfile(cookiepath):
+#        #if the user supplied only a folder path, append on to the end of the path a filename.
+#        print "hockeystreams: cant make cookiepath " + cookiepath
+#        return False
     if not os.path.isdir(os.path.dirname(cookiepath)):
-        try:
-            os.remove(cookiepath)
-        except:
-            pass
         try:
             os.makedirs(os.path.dirname(cookiepath))
         except:
-            cookiepath = os.path.join(".", "addons_data", "plugin.video.hockeystreams", "cookies.lwp")
-            if debug:
-                print "falling back on manual path: " + cookiepath
-
-            if not os.path.isdir(os.path.dirname(cookiepath)):
-                try:
-                    os.remove(cookiepath)
-                except:
-                    pass
-                os.makedirs(os.path.dirname(cookiepath))
+            print "hockeystreams: cant make cookiepath " + cookiepath
+            return False
 
     #delete any old version of the cookie file
     try:
-        os.remove(cookiepath)
+        if os.path.isfile(cookiepath):
+            os.remove(cookiepath)
     except:
-        pass
+        print "hockeystreams: cant clear cookiepath file" + cookiepath
+        return False
 
     if username and password:
         #the url you will request to.
@@ -109,17 +100,15 @@ def doLogin(cookiepath, username, password, debug = False):
         cj.save(xbmc.translatePath(cookiepath))
 #        if debug:
 #            print "cookies!" + str(cj._cookies)
+        
         #check the received html for a string that will tell us if the user is logged in
         #pass the username, which can be used to do this.
         url = "http://www.hockeystreams.com"
         page = gethtml.get(url, cj = cj, debug = debug)
         if debug:
-            print page
+#            print page
             print "index + " + str(page.find('SIGN OUT')) + "/" + str(len(page))
         login = check_login(page, username)
-        #if login suceeded, save the cookiejar to disk
-#        if not login:
-#            os.remove(cookiepath)
         #return whether we are logged in or not
         return login
     else:

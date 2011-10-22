@@ -13,7 +13,8 @@ __datapath__ = 'special://profile/addon_data/' +__addonname__
 
 #important! deals with a bug where errors are thrown if directory does not exist.
 if not os.path.exists: os.makedirs(__datapath__)
-cookiepath = __datapath__
+cookiepath = xbmc.translatePath(os.path.join(__datapath__, "cookies.lwp"))
+
 
 __plugin__ = "Hockeystreams"
 __author__ = "wotever"
