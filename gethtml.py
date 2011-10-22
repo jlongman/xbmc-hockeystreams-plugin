@@ -43,33 +43,38 @@ def url_for_cookies(url):
     return url_is_compatible        
 
 def get(url,cookiepath=None, cj=None, debug = False):
-    if debug:
-        print 'processing url: '+url
+    if debug: print 'processing url: ' + url + " - cookiepath " + str(cookiepath)
     # use cookies if cookiepath is set and if the cookiepath exists.
     if cookiepath is not None or cj is not None:
         #only use cookies for urls specified
         if url_for_cookies(url):
             if cj is None:
                 #check if user has supplied only a folder path, or a full path
+                if debug: print "test cookiepath isfile"
                 if not os.path.isfile(cookiepath):
-                    #if the user supplied only a folder path, append on to the end of the path a common filename.
-                    cookiepath = os.path.join(cookiepath,'cookies.lwp')
+                    print "hockeystreams: cookiepath isnt a file " + cookiepath
+                    return None
 
                 #check that the cookie exists
-                if os.path.exists(cookiepath):
-                    cj = cookielib.LWPCookieJar()
-                    cj.load(cookiepath)
-                else:
-                    workaround_cookiepath = os.path.join(".", "addons_data", "plugin.video.hockeystreams", "cookies.lwp")
-                    return get(url, workaround_cookiepath, cj)
+                if debug: print "test cookiepath exists"
+                try:
+                    if os.path.exists(cookiepath):
+                        cj = cookielib.LWPCookieJar()
+                        if debug: print "load cookiepath "
+                        cj.load(cookiepath)
+                    else:
+                        print "hockeystreams: cookiepath doesnt exist " + cookiepath
+                        return None
+                except:
+                    print "hockeystreams: error loading cookiepath" + cookiepath
+                    return None
 
             if debug:
 #                print "cookies " + str(cj._cookies)
                 print "cookies " + cj._cookies.keys()[0]
                 print "hockeystreams getlogin url " + url
             url2 = url.replace("www.hockeystreams.com", cj._cookies.keys()[0])
-            if debug:
-                print "hockeystreams getlogin url2 " + url2
+            if debug: print "hockeystreams getlogin url2 " + url2
 
             req = urllib2.Request(url2)
             req.add_header('User-Agent', 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3')
@@ -80,8 +85,7 @@ def get(url,cookiepath=None, cj=None, debug = False):
             response.close()
             return link
         else:
-            if debug:
-                print "no url for cookies "  + url
+            if debug: print "no url for cookies "  + url
             return _loadwithoutcookies(url)
     else: return _loadwithoutcookies(url)
 
