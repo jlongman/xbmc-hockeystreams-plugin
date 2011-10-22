@@ -56,6 +56,8 @@ class HockeyUtil:
         if loginRequired:
             try:
                 html = gethtml.get(currentUrl, cookiepath = self.cookiepath, debug = self.__dbg__)
+                if html is None:
+                    raise IndexError
             except IndexError:
                 self.__settings__.openSettings()
                 self.login()

@@ -53,7 +53,7 @@ def get(url,cookiepath=None, cj=None, debug = False):
                 if debug: print "test cookiepath isfile"
                 if not os.path.isfile(cookiepath):
                     print "hockeystreams: cookiepath isnt a file " + cookiepath
-                    return None
+                    raise IndexError
 
                 #check that the cookie exists
                 if debug: print "test cookiepath exists"
@@ -64,7 +64,7 @@ def get(url,cookiepath=None, cj=None, debug = False):
                         cj.load(cookiepath)
                     else:
                         print "hockeystreams: cookiepath doesnt exist " + cookiepath
-                        return None
+                        raise IndexError
                 except:
                     print "hockeystreams: error loading cookiepath" + cookiepath
                     return None
