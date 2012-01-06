@@ -24,7 +24,7 @@ class LegacyHockey(AbstractHockey):
         self.__dbg__ = debug
         self.mark_broken_cdn4_links = mark_broken
 
-    def LIVE_GAMES(self, mode):
+    def CATEGORY_LIVE_GAMES(self, mode):
         xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_NONE)
         if self.__dbg__:            print ("hockeystreams: enter live games")
         html = urllib.urlopen("http://www4.hockeystreams.com/rss/streams.php")
@@ -34,7 +34,7 @@ class LegacyHockey(AbstractHockey):
                 gameName = gameName + " " + date.split(' - ', 1)[1]
             self.util.addDir(gameName, url, mode, '', 1, gamename = gameName, fullDate = real_date)
 
-    def LAST_15_GAMES(self, mode):
+    def CATEGORY_LAST_15_GAMES(self, mode):
         xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_NONE)
         if self.__dbg__:            print ("hockeystreams: enter live games")
         html = urllib.urlopen("http://www6.hockeystreams.com/rss/archives.php")
@@ -57,7 +57,7 @@ class LegacyHockey(AbstractHockey):
             gameName = gameName[offset:]
             self.util.addDir(gameName, v, mode, '', 1, gamename = gameName)
 
-    def BY_TEAM(self, mode):
+    def CATEGORY_BY_TEAM(self, mode):
         url = archivestreams
         if self.__dbg__:            print ("hockeystreams: enter team")
         teamNames = re.compile('/hockey_archives/'+ self.archiveDate + '/[a-z]+_?[a-z]?') #simplified

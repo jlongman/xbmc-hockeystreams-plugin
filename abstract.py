@@ -4,6 +4,7 @@ __author__ = 'longman'
 
 class AbstractHockey(object):
     def __init__(self, util):
+        assert type(self) != AbstractHockey, "AbstractHockey must not be instantiated directly"
         today = datetime.date.today()
         self.util = util
         self.today = today
@@ -18,7 +19,6 @@ class AbstractHockey(object):
             archiveDay = '0' + archiveDay
         archiveDate = sep.join([archiveMonth, archiveDay, str(year)])
         return archiveDate
-
 
     def YEAR(self, url, mode):
         self.util.addDir(self.util.__settings__.getLocalizedString(40200), url, 6, '', 1)

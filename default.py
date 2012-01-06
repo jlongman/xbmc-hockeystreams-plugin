@@ -1,3 +1,4 @@
+from operator import isSequenceType
 import urllib,  os, sys, datetime
 
 import xbmc, xbmcplugin, xbmcaddon, xbmcgui
@@ -31,6 +32,39 @@ empty = None
 
 hockeystreams = 'http://www.hockeystreams.com'
 today = datetime.date.today()
+
+class CompositeHockey(object):
+    """ a composite pattern """
+    def __init__(self):
+        self.data = []
+
+#    def __call__(self, *args, **kwargs):
+    def __getattr__(self, item):
+
+        class bridge(object):
+            def __init__(self, ad):
+                self.datain = ad
+            def __call__(self, *args):
+#                print "item: " + item
+                print "datain: " + str(self.datain)
+#                print "args " + str(args)
+                for member in self.datain:
+                        print str(member)
+#                    try:
+                        if isSequenceType(args):
+                            member.__getattribute__(item)(*args)
+                        else:
+                            member.__getattribute__(item)(args)
+                        if "CATEGORY" in item:
+                            print "abort for category"
+                            break
+#                    except:
+#                        print "error getattr execution %s"%(member.__getattr__(item))
+#                        print sys.exc_info()[0]
+        return bridge(self.data)#, item)
+
+    def add(self, member):
+        self.data.append(member)
 
 def get_params():
     param = {}
@@ -120,14 +154,18 @@ if __dbg__:
 
 
 #hockey = LegacyHockey(hockeyUtil, __mark_broken_cdn4_links__, __dbg__)
-hockey = IStreamHockey(hockeyUtil, __dbg__)
+#hockey = IStreamHockey(hockeyUtil, __dbg__)
+hockey = CompositeHockey()
+hockey.add(IStreamHockey(hockeyUtil, __dbg__))
+hockey.add(LegacyHockey(hockeyUtil, __mark_broken_cdn4_links__, __dbg__))
+
 
 cache = True
 if mode is None or mode == 0 or url is None or len(url) < 1:
     CATEGORIES()
 elif mode == 1:
     cache = False
-    hockey.LIVE_GAMES(1000)
+    hockey.CATEGORY_LIVE_GAMES(1000)
 elif mode == 2:
     cache = False
     hockey.YEAR(hockeystreams, 3)
@@ -142,9 +180,9 @@ elif mode == 5:
     hockey.ARCHIVE_GAMES_BY_DATE(year, month, day)
 elif mode == 6:
     cache = False
-    hockey.LAST_15_GAMES(1000)
+    hockey.CATEGORY_LAST_15_GAMES(1000)
 elif mode == 30:
-    hockey.BY_TEAM(31)
+    hockey.CATEGORY_BY_TEAM(31)
 elif mode == 31:
     cache = False
     hockey.ARCHIVE_GAMES_BY_TEAM(url, 1000)

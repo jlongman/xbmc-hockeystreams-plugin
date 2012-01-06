@@ -31,7 +31,7 @@ class IStreamHockey(AbstractHockey):
         super(IStreamHockey, self).__init__(hockeyUtil)
         self.__dbg__ = debug
 
-    def LIVE_GAMES(self, mode):
+    def CATEGORY_LIVE_GAMES(self, mode):
         xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_NONE)
         if self.__dbg__:            print ("hockeystreams: enter live games")
         html = urllib.urlopen(iStreamLive)
@@ -44,7 +44,7 @@ class IStreamHockey(AbstractHockey):
             self.util.addDir(gameName, url, mode, '', 0, gamename = gameName, fullDate = real_date)
                 #self.util.addLink(gameName, gameName, real_date, url, '', 1, mode)
 
-    def LAST_15_GAMES(self, mode):
+    def CATEGORY_LAST_15_GAMES(self, mode):
         #mode = 2001
         xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_NONE)
         if self.__dbg__:            print ("hockeystreams: enter live games")
@@ -76,7 +76,7 @@ class IStreamHockey(AbstractHockey):
             self.util.addDir(gameName, url, mode, '', 0, gamename = gameName, fullDate = real_date)
 #            self.util.addLink(gameName, gameName, real_date, url, '', 1, mode)
 
-    def BY_TEAM(self, mode):
+    def CATEGORY_BY_TEAM(self, mode):
         url = archivestreams
         if self.__dbg__:            print ("hockeystreams: enter team")
         teamNames = re.compile('/hockey_archives/'+ self.archiveDate + '/[a-z]+_?[a-z]?') #simplified
