@@ -6,6 +6,7 @@
     <string id="30200">Username</string>
     <string id="30201">Password</string>
     <string id="30202">Mark cdn-a-4 as broken</string>
+    <string id="30203">Experimental iStream support</string>
     <string id="30218">Debug</string>
 
     <string id="40000">Succeeded!</string>

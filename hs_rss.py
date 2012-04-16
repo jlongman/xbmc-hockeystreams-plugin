@@ -19,7 +19,15 @@ def get_archive_rss_streams(rssBody, _debug_):
 
 def get_rss_streams(rssBody, live = True, _debug_ = False):
     print "get_rss_streams: debug = " + str(_debug_)
-    gameDom = minidom.parse(rssBody)
+    listOfStrings = rssBody.readlines()
+    document = ''.join(listOfStrings)
+    if __debug__: print str(document)
+    document = re.sub(
+        r"<media.*/>",
+        r"<!-- -->",
+        str(document)
+    )
+    gameDom = minidom.parseString(document)
     games = []
     for game in gameDom.getElementsByTagName('item'):
         title = getText(game.getElementsByTagName('title')[0].childNodes)

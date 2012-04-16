@@ -27,6 +27,7 @@ hockeyUtil = HockeyUtil(__settings__, cookiepath)
 
 __dbg__ = __settings__.getSetting("debug") == "true"
 __mark_broken_cdn4_links__ = __settings__.getSetting("mark_cdn4") == "true"
+__use_iStreams__ = __settings__.getSetting("useIStreams") == "true"
 
 empty = None
 
@@ -153,11 +154,13 @@ if __dbg__:
 
 
 
-#hockey = LegacyHockey(hockeyUtil, __mark_broken_cdn4_links__, __dbg__)
-#hockey = IStreamHockey(hockeyUtil, __dbg__)
-hockey = CompositeHockey()
-hockey.add(IStreamHockey(hockeyUtil, __dbg__))
-hockey.add(LegacyHockey(hockeyUtil, __mark_broken_cdn4_links__, __dbg__))
+
+if not __use_iStreams__:
+    hockey = LegacyHockey(hockeyUtil, __mark_broken_cdn4_links__, __dbg__)
+else:
+    hockey = CompositeHockey()
+    hockey.add(IStreamHockey(hockeyUtil, __dbg__))
+    hockey.add(LegacyHockey(hockeyUtil, __mark_broken_cdn4_links__, __dbg__))
 
 
 cache = True
